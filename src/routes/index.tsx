@@ -1,6 +1,8 @@
 import { createFileRoute, useRouter, type ErrorComponentProps } from "@tanstack/react-router";
-import { queryOptions, useSuspenseQuery } from "@tanstack/react-query";
-import { getLeads } from "@/lib/leads.functions";
+import { queryOptions, useSuspenseQuery, useQueryClient } from "@tanstack/react-query";
+import { useState, type FormEvent } from "react";
+import { useServerFn } from "@tanstack/react-start";
+import { getLeads, addLead } from "@/lib/leads.functions";
 
 const leadsQuery = queryOptions({ queryKey: ["leads"], queryFn: () => getLeads() });
 
@@ -48,6 +50,7 @@ function LeadsPage() {
           <p className="text-xl font-semibold">{brl.format(total)}</p>
         </div>
       </header>
+      <LeadForm />
       <div className="overflow-x-auto rounded-lg border bg-card">
         <table className="w-full text-sm">
           <thead className="bg-muted text-left text-muted-foreground">
@@ -78,5 +81,36 @@ function LeadsPage() {
         </table>
       </div>
     </main>
+  );
+}
+
+function LeadForm() {
+  const add = useServerFn(addLead);
+  const qc = useQueryClient();
+  const [nome, setNome] = useState("");
+  const [empresa, setEmpresa] = useState("");
+  const [valor, setValor] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState<string | null>(null);
+  async function onSubmit(e: FormEvent) {
+    e.preventDefault();
+    setBusy(true); setErr(null);
+    try {
+      await add({ data: { nome, empresa, valor: Number(valor.replace(",", ".")) } });
+      setNome(""); setEmpresa(""); setValor("");
+      await qc.invalidateQueries({ queryKey: ["leads"] });
+    } catch (e) {
+      setErr(e instanceof Error ? e.message : "Erro ao adicionar lead");
+    } finally { setBusy(false); }
+  }
+  const input = "w-full rounded-md border bg-background px-3 py-2 text-sm";
+  return (
+    <form onSubmit={onSubmit} className="mb-8 grid gap-3 rounded-lg border bg-card p-4 sm:grid-cols-[1fr_1fr_160px_auto] sm:items-end">
+      <label className="text-sm">Nome<input required maxLength={200} className={input} value={nome} onChange={(e) => setNome(e.target.value)} /></label>
+      <label className="text-sm">Empresa<input maxLength={200} className={input} value={empresa} onChange={(e) => setEmpresa(e.target.value)} /></label>
+      <label className="text-sm">Valor<input required inputMode="decimal" className={input} value={valor} onChange={(e) => setValor(e.target.value)} placeholder="0,00" /></label>
+      <button disabled={busy} className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground disabled:opacity-50">{busy ? "Adicionando..." : "Adicionar lead"}</button>
+      {err && <p className="text-sm text-destructive sm:col-span-4">{err}</p>}
+    </form>
   );
 }
