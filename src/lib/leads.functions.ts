@@ -37,17 +37,19 @@ export const updateLeadStage = createServerFn({ method: "POST" })
   });
 
 export const addLead = createServerFn({ method: "POST" })
-  .inputValidator((d: { nome: string; empresa: string; valor: number }) => {
+  .inputValidator((d: { nome: string; empresa: string; valor: number; etapa: string }) => {
     const nome = String(d.nome ?? "").trim().slice(0, 200);
     const empresa = String(d.empresa ?? "").trim().slice(0, 200);
     const valor = Number(d.valor);
+    const etapa = String(d.etapa ?? "").trim();
     if (!nome) throw new Error("Nome é obrigatório");
     if (!Number.isFinite(valor) || valor < 0) throw new Error("Valor inválido");
-    return { nome, empresa, valor };
+    if (!STAGES.includes(etapa as (typeof STAGES)[number])) throw new Error("Etapa inválida");
+    return { nome, empresa, valor, etapa };
   })
   .handler(async ({ data }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { error } = await supabaseAdmin.from("leads").insert({ ...data, etapa: "Novo" });
+    const { error } = await supabaseAdmin.from("leads").insert(data);
     if (error) throw new Error(error.message);
     return { ok: true };
   });
