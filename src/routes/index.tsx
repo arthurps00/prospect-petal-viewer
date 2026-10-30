@@ -125,14 +125,15 @@ function LeadForm() {
   const [nome, setNome] = useState("");
   const [empresa, setEmpresa] = useState("");
   const [valor, setValor] = useState("");
+  const [etapa, setEtapa] = useState<(typeof STAGES)[number]>("Novo");
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   async function onSubmit(e: FormEvent) {
     e.preventDefault();
     setBusy(true); setErr(null);
     try {
-      await add({ data: { nome, empresa, valor: Number(valor.replace(",", ".")) } });
-      setNome(""); setEmpresa(""); setValor("");
+      await add({ data: { nome, empresa, valor: Number(valor.replace(",", ".")), etapa } });
+      setNome(""); setEmpresa(""); setValor(""); setEtapa("Novo");
       await qc.invalidateQueries({ queryKey: ["leads"] });
     } catch (e) {
       setErr(e instanceof Error ? e.message : "Erro ao adicionar lead");
@@ -140,12 +141,13 @@ function LeadForm() {
   }
   const input = "w-full rounded-md border bg-background px-3 py-2 text-sm";
   return (
-    <form onSubmit={onSubmit} className="mb-8 grid gap-3 rounded-lg border bg-card p-4 sm:grid-cols-[1fr_1fr_160px_auto] sm:items-end">
+    <form onSubmit={onSubmit} className="mb-8 grid gap-3 rounded-lg border bg-card p-4 sm:grid-cols-[1fr_1fr_160px_170px_auto] sm:items-end">
       <label className="text-sm">Nome<input required maxLength={200} className={input} value={nome} onChange={(e) => setNome(e.target.value)} /></label>
       <label className="text-sm">Empresa<input maxLength={200} className={input} value={empresa} onChange={(e) => setEmpresa(e.target.value)} /></label>
       <label className="text-sm">Valor<input required inputMode="decimal" className={input} value={valor} onChange={(e) => setValor(e.target.value)} placeholder="0,00" /></label>
+      <label className="text-sm">Etapa<select className={input} value={etapa} onChange={(e) => setEtapa(e.target.value as (typeof STAGES)[number])}>{STAGES.map((s) => <option key={s} value={s}>{s}</option>)}</select></label>
       <button disabled={busy} className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground disabled:opacity-50">{busy ? "Adicionando..." : "Adicionar lead"}</button>
-      {err && <p className="text-sm text-destructive sm:col-span-4">{err}</p>}
+      {err && <p className="text-sm text-destructive sm:col-span-5">{err}</p>}
     </form>
   );
 }
