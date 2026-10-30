@@ -1,0 +1,1 @@
+DELETE FROM public.leads WHERE nome = 'Lead Teste Etapa' AND empresa = 'Empresa Teste';
