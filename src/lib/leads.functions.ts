@@ -18,3 +18,19 @@ export const getLeads = createServerFn({ method: "GET" }).handler(async () => {
   if (error) throw new Error(error.message);
   return (data ?? []) as Lead[];
 });
+
+export const addLead = createServerFn({ method: "POST" })
+  .inputValidator((d: { nome: string; empresa: string; valor: number }) => {
+    const nome = String(d.nome ?? "").trim().slice(0, 200);
+    const empresa = String(d.empresa ?? "").trim().slice(0, 200);
+    const valor = Number(d.valor);
+    if (!nome) throw new Error("Nome é obrigatório");
+    if (!Number.isFinite(valor) || valor < 0) throw new Error("Valor inválido");
+    return { nome, empresa, valor };
+  })
+  .handler(async ({ data }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { error } = await supabaseAdmin.from("leads").insert({ ...data, etapa: "Novo" });
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
