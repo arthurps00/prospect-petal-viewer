@@ -4,3 +4,9 @@
 
 #Em cada lead, adicione um seletor com as opções Novo, Em contato e Fechado. Ao mudar, atualize a coluna etapa desse lead no Supabase
 
+#Onde este dado fica guardado?
+fica guardado no banco de dados do supabase
+
+#o que acontece se eu apagar esta linha no Supabase?
+ao atualizar o site, ainforção que estava sendo mostrada deixará de existir
+
