@@ -1,4 +1,4 @@
-import { createFileRoute, useRouter } from "@tanstack/react-router";
+import { createFileRoute, useRouter, type ErrorComponentProps } from "@tanstack/react-router";
 import { queryOptions, useSuspenseQuery } from "@tanstack/react-query";
 import { getLeads } from "@/lib/leads.functions";
 
@@ -21,7 +21,7 @@ export const Route = createFileRoute("/")({
   notFoundComponent: () => <p className="p-8">Nada encontrado.</p>,
 });
 
-function ErrorView({ error }: { error: Error }) {
+function ErrorView({ error }: ErrorComponentProps) {
   const router = useRouter();
   return (
     <div className="p-8">
