@@ -2,7 +2,7 @@ import { createFileRoute, useRouter, type ErrorComponentProps } from "@tanstack/
 import { queryOptions, useSuspenseQuery, useQueryClient } from "@tanstack/react-query";
 import { useState, type FormEvent } from "react";
 import { useServerFn } from "@tanstack/react-start";
-import { getLeads, addLead, updateLeadStage, STAGES } from "@/lib/leads.functions";
+import { getLeads, addLead, updateLeadStage, STAGES, type Lead } from "@/lib/leads.functions";
 
 const leadsQuery = queryOptions({ queryKey: ["leads"], queryFn: () => getLeads() });
 
