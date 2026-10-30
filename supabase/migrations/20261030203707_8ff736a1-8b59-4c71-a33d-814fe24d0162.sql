@@ -1,0 +1,1 @@
+UPDATE public.leads SET etapa = 'Em contato' WHERE etapa = 'Em Contato';
