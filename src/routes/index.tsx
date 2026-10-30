@@ -87,7 +87,7 @@ function StageSelect({ leadId, etapa }: { leadId: number; etapa: string | null }
   const qc = useQueryClient();
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
-  const value = STAGES.includes(etapa as (typeof STAGES)[number]) ? etapa : "";
+  const value = etapa !== null && STAGES.includes(etapa as (typeof STAGES)[number]) ? etapa : "";
   async function onChange(e: React.ChangeEvent<HTMLSelectElement>) {
     const next = e.target.value;
     if (!next || next === value) return;
