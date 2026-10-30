@@ -2,7 +2,8 @@ import { createFileRoute, useRouter, type ErrorComponentProps } from "@tanstack/
 import { queryOptions, useSuspenseQuery, useQueryClient } from "@tanstack/react-query";
 import { useState, type FormEvent } from "react";
 import { useServerFn } from "@tanstack/react-start";
-import { getLeads, addLead, updateLeadStage, STAGES, type Lead } from "@/lib/leads.functions";
+import { Trash2 } from "lucide-react";
+import { getLeads, addLead, updateLeadStage, deleteLead, STAGES, type Lead } from "@/lib/leads.functions";
 
 const leadsQuery = queryOptions({ queryKey: ["leads"], queryFn: () => getLeads() });
 
@@ -60,11 +61,12 @@ function LeadsPage() {
               <th className="px-4 py-3">Etapa</th>
               <th className="px-4 py-3 text-right">Valor</th>
               <th className="px-4 py-3">Criado em</th>
+              <th className="px-4 py-3"></th>
             </tr>
           </thead>
           <tbody>
             {leads.length === 0 && (
-              <tr><td colSpan={5} className="px-4 py-10 text-center text-muted-foreground">Nenhum lead ainda.</td></tr>
+              <tr><td colSpan={6} className="px-4 py-10 text-center text-muted-foreground">Nenhum lead ainda.</td></tr>
             )}
             {leads.map((l) => (
               <tr key={l.id} className="border-t">
@@ -73,6 +75,7 @@ function LeadsPage() {
                 <td className="px-4 py-3"><StageSelect leadId={l.id} etapa={l.etapa} /></td>
                 <td className="px-4 py-3 text-right">{l.valor != null ? brl.format(Number(l.valor)) : "—"}</td>
                 <td className="px-4 py-3 text-muted-foreground">{new Date(l.created_at).toLocaleDateString("pt-BR")}</td>
+                <td className="px-4 py-3 text-right"><DeleteButton leadId={l.id} /></td>
               </tr>
             ))}
           </tbody>
@@ -149,5 +152,31 @@ function LeadForm() {
       <button disabled={busy} className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground disabled:opacity-50">{busy ? "Adicionando..." : "Adicionar lead"}</button>
       {err && <p className="text-sm text-destructive sm:col-span-5">{err}</p>}
     </form>
+  );
+}
+
+function DeleteButton({ leadId }: { leadId: number }) {
+  const del = useServerFn(deleteLead);
+  const qc = useQueryClient();
+  const [busy, setBusy] = useState(false);
+  async function onClick() {
+    setBusy(true);
+    const prev = qc.getQueryData<Lead[]>(leadsQuery.queryKey);
+    qc.setQueryData<Lead[]>(leadsQuery.queryKey, (old) => old?.filter((x) => x.id !== leadId));
+    try {
+      await del({ data: { id: leadId } });
+    } catch (e) {
+      qc.setQueryData(leadsQuery.queryKey, prev);
+      alert(e instanceof Error ? e.message : "Erro ao apagar lead");
+    } finally {
+      setBusy(false);
+      await qc.invalidateQueries({ queryKey: ["leads"] });
+    }
+  }
+  return (
+    <button type="button" onClick={onClick} disabled={busy} aria-label="Apagar lead" title="Apagar lead"
+      className="rounded-md p-1.5 text-destructive hover:bg-destructive/10 disabled:opacity-50">
+      <Trash2 className="h-4 w-4" />
+    </button>
   );
 }

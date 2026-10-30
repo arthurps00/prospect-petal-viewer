@@ -53,3 +53,16 @@ export const addLead = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
     return { ok: true };
   });
+
+export const deleteLead = createServerFn({ method: "POST" })
+  .inputValidator((d: { id: number }) => {
+    const id = Number(d.id);
+    if (!Number.isInteger(id) || id <= 0) throw new Error("Lead inválido");
+    return { id };
+  })
+  .handler(async ({ data }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { error } = await supabaseAdmin.from("leads").delete().eq("id", data.id);
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
