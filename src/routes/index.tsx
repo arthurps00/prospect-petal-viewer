@@ -125,14 +125,15 @@ function LeadForm() {
   const [nome, setNome] = useState("");
   const [empresa, setEmpresa] = useState("");
   const [valor, setValor] = useState("");
+  const [etapa, setEtapa] = useState<(typeof STAGES)[number]>("Novo");
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   async function onSubmit(e: FormEvent) {
     e.preventDefault();
     setBusy(true); setErr(null);
     try {
-      await add({ data: { nome, empresa, valor: Number(valor.replace(",", ".")) } });
-      setNome(""); setEmpresa(""); setValor("");
+      await add({ data: { nome, empresa, valor: Number(valor.replace(",", ".")), etapa } });
+      setNome(""); setEmpresa(""); setValor(""); setEtapa("Novo");
       await qc.invalidateQueries({ queryKey: ["leads"] });
     } catch (e) {
       setErr(e instanceof Error ? e.message : "Erro ao adicionar lead");
