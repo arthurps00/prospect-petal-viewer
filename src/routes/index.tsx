@@ -2,7 +2,7 @@ import { createFileRoute, useRouter, type ErrorComponentProps } from "@tanstack/
 import { queryOptions, useSuspenseQuery, useQueryClient } from "@tanstack/react-query";
 import { useState, type FormEvent } from "react";
 import { useServerFn } from "@tanstack/react-start";
-import { getLeads, addLead } from "@/lib/leads.functions";
+import { getLeads, addLead, updateLeadStage, STAGES } from "@/lib/leads.functions";
 
 const leadsQuery = queryOptions({ queryKey: ["leads"], queryFn: () => getLeads() });
 
@@ -70,9 +70,7 @@ function LeadsPage() {
               <tr key={l.id} className="border-t">
                 <td className="px-4 py-3 font-medium">{l.nome ?? "—"}</td>
                 <td className="px-4 py-3">{l.empresa ?? "—"}</td>
-                <td className="px-4 py-3">
-                  {l.etapa ? <span className="rounded-full bg-secondary px-2 py-1 text-xs">{l.etapa}</span> : "—"}
-                </td>
+                <td className="px-4 py-3"><StageSelect leadId={l.id} etapa={l.etapa} /></td>
                 <td className="px-4 py-3 text-right">{l.valor != null ? brl.format(Number(l.valor)) : "—"}</td>
                 <td className="px-4 py-3 text-muted-foreground">{new Date(l.created_at).toLocaleDateString("pt-BR")}</td>
               </tr>
@@ -81,6 +79,43 @@ function LeadsPage() {
         </table>
       </div>
     </main>
+  );
+}
+
+function StageSelect({ leadId, etapa }: { leadId: number; etapa: string | null }) {
+  const update = useServerFn(updateLeadStage);
+  const qc = useQueryClient();
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState<string | null>(null);
+  const value = STAGES.includes(etapa as (typeof STAGES)[number]) ? etapa : "";
+  async function onChange(e: React.ChangeEvent<HTMLSelectElement>) {
+    const next = e.target.value;
+    if (!next || next === value) return;
+    setBusy(true); setErr(null);
+    qc.setQueryData<Lead[]>(leadsQuery.queryKey, (old) =>
+      old?.map((x) => (x.id === leadId ? { ...x, etapa: next } : x))
+    );
+    try {
+      await update({ data: { id: leadId, etapa: next } });
+      await qc.invalidateQueries({ queryKey: ["leads"] });
+    } catch (e) {
+      setErr(e instanceof Error ? e.message : "Erro ao atualizar etapa");
+      await qc.invalidateQueries({ queryKey: ["leads"] });
+    } finally { setBusy(false); }
+  }
+  return (
+    <div>
+      <select
+        disabled={busy}
+        value={value}
+        onChange={onChange}
+        className="rounded-md border bg-background px-2 py-1 text-xs disabled:opacity-50"
+      >
+        <option value="" disabled>—</option>
+        {STAGES.map((s) => <option key={s} value={s}>{s}</option>)}
+      </select>
+      {err && <p className="text-xs text-destructive">{err}</p>}
+    </div>
   );
 }
 
